@@ -1,20 +1,16 @@
 #Stage 1 : builder debian image
-FROM debian:buster as builder
+FROM debian:sid as builder
 
 # properly setup debian sources
 ENV DEBIAN_FRONTEND noninteractive
-RUN echo "deb http://http.debian.net/debian buster main\n\
-deb-src http://http.debian.net/debian buster main\n\
-deb http://http.debian.net/debian buster-updates main\n\
-deb-src http://http.debian.net/debian buster-updates main\n\
-deb http://security.debian.org buster/updates main\n\
-deb-src http://security.debian.org buster/updates main\n\
+RUN echo "deb http://deb.debian.org/debian/ unstable main contrib\n\
+deb-src http://deb.debian.org/debian/ unstable main contrib\n\
 " > /etc/apt/sources.list
 
 # install package building helpers
 # rsyslog for logging (ref https://github.com/stilliard/docker-pure-ftpd/issues/17)
 RUN apt-get -y update && \
-	apt-get -y --force-yes --fix-missing install dpkg-dev debhelper &&\
+	apt-get -y --force-yes --fix-missing install dpkg-dev debhelper ca-certificates &&\
 	apt-get -y build-dep pure-ftpd
 	
 
@@ -29,10 +25,11 @@ RUN mkdir /tmp/pure-ftpd/ && \
 
 
 #Stage 2 : actual pure-ftpd image
-FROM debian:buster-slim
+FROM debian:sid-slim
 
 # feel free to change this ;)
 LABEL maintainer "Andrew Stilliard <andrew.stilliard@gmail.com>"
+LABEL maintainer "Dominic Winkler <d.winkler@flexarts.at>"
 
 # install dependencies
 # FIXME : libcap2 is not a dependency anymore. .deb could be fixed to avoid asking this dependency
@@ -44,6 +41,7 @@ RUN apt-get -y update && \
     libmariadb3 \
 	libpam0g \
 	libssl1.1 \
+	libsodium23 \
     lsb-base \
     openbsd-inetd \
     openssl \
